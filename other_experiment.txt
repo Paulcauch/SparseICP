@@ -1,0 +1,362 @@
+if False:
+
+        # Cloud paths
+        ref2D_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /ref2D.ply'
+        data2D_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /data2D.ply'
+        
+        # Load clouds
+        ref2D_ply = read_ply(ref2D_path)
+        data2D_ply = read_ply(data2D_path)
+        ref2D = np.vstack((ref2D_ply['x'], ref2D_ply['y']))
+        data2D = np.vstack((data2D_ply['x'], data2D_ply['y']))        
+
+        # Apply ICP
+        data2D_opt, R_list, T_list, neighbors_list, RMS_list = Sparse_ICP(data2D,ref2D,p=0.5,mu=20,max_iter_icp=200,RMS_threshold=1e-4)
+        
+        # Show ICP
+        show_ICP(data2D, ref2D, R_list, T_list, neighbors_list)
+        
+        # Plot RMS
+        plt.plot(RMS_list)
+        plt.show()
+        
+    ##### BUNNY CLASSIC SPARSE ICP #####
+    if False :
+
+        # Cloud paths
+        bunny_o_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_original.ply'
+        bunny_p_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_perturbed.ply'
+        bunny_vp_path='/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_very_perturbed.ply'
+        bunny_r_path='/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_returned.ply'
+
+        # Load clouds
+        bunny_o_ply = read_ply(bunny_o_path)
+        bunny_p_ply = read_ply(bunny_p_path)
+        bunny_vp_ply=read_ply(bunny_vp_path)
+        bunny_r_ply=read_ply(bunny_r_path)
+        bunny_o = np.vstack((bunny_o_ply['x'], bunny_o_ply['y'], bunny_o_ply['z']))
+        bunny_p = np.vstack((bunny_p_ply['x'], bunny_p_ply['y'], bunny_p_ply['z']))
+        bunny_vp=np.vstack((bunny_vp_ply['x'], bunny_vp_ply['y'], bunny_vp_ply['z']))
+        bunny_r=np.vstack((bunny_r_ply['x'], bunny_r_ply['y'], bunny_r_ply['z']))
+
+        # Apply ICP
+        #bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(bunny_r, bunny_o, 30, 1e-4)
+        bunny_p_opt, R_list, T_list, neighbors_list, RMS_list=Sparse_ICP(bunny_p,bunny_o,p=1,mu=10,max_iter_icp=10,RMS_threshold=1e-4)
+        #bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point_weighted(bunny_p, bunny_o, p=1, max_iter= 30,RMS_threshold= 1e-4)
+
+        # Show ICP
+        show_ICP(bunny_p, bunny_o, R_list, T_list, neighbors_list)
+        
+        # Plot RMS
+        plt.plot(RMS_list)
+        plt.show()
+    
+    ##### CHOUETTE ######
+    if False : 
+        owl_right_path='/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /owl_pointcloud/owl_segment_left.ply'
+        owl_left_path='/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /owl_pointcloud/owl_segment_right.ply'
+
+        owl_left_ply=read_ply(owl_left_path)
+        owl_right_ply=read_ply(owl_right_path)
+
+        owl_left=np.vstack((owl_left_ply['x'],owl_left_ply['y'],owl_left_ply['z']))
+        owl_right=np.vstack((owl_right_ply['x'],owl_right_ply['y'],owl_right_ply['z']))
+
+        per=90
+        owl_left=transfo(owl_left,[-3,0,0])
+        owl_left=crop_random_points(owl_left,per)
+        owl_right=crop_random_points(owl_right,per)
+        print(f'We cropped {per}% of the cloud. the new shape of owl_left is {owl_left.shape}, the new shape of owl_right is {owl_right.shape}.')
+
+
+        all_eigenvalues_r, all_eigenvectors_r = compute_local_PCA_knn(owl_right.T, owl_right.T, 30)
+        normals_owl_right = all_eigenvectors_r[:, :, 0].T
+        print('normal calculated.')
+
+        
+        # Apply ICP
+        #owl_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(owl_left, owl_right, 50, 1e-8)
+
+        owl_p_opt_2, R_list_2, T_list_2, neighbors_list_2, RMS_list_2=Sparse_ICP_point_to_plane(owl_left,owl_right,normal_ref=normals_owl_right,p=0.4,mu=10,max_iter_icp=30,RMS_threshold=1e-4)
+        #owl_p_opt3, R_list3, T_list3, neighbors_list3, RMS_list3 = icp_point_to_point_correspondances_prunning(owl_left,owl_right,delta=0.01,max_iter=50,RMS_threshold=1e-5)
+
+
+        #write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /owl_left_décalé',owl_left.T,['x','y','z'])
+        #write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /owl_ICP_point_opt',owl_p_opt.T,['x','y','z'])
+        write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /owl_SICP_opt_p=0.5',owl_p_opt_2.T,['x','y','z'])
+        #write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /ICP_pruning_opt_d=20',owl_p_opt3.T,['x','y','z'])
+
+        # Show ICP
+        #show_ICP(owl_left, owl_right, R_list, T_list, neighbors_list)
+        show_ICP(owl_left, owl_right, R_list_2, T_list_2, neighbors_list_2)
+        #show_ICP(owl_left, owl_right, R_list3, T_list3, neighbors_list3)
+        
+        # Plot RMS
+        #plt.plot(RMS_list,color='r',label='ICP point to point')
+        plt.plot(RMS_list_2,color='b',label='SICP point to plane')
+        #plt.plot(RMS_list3,color='g',label='ICP correspondance pruning d=5‰')
+        plt.xlabel('number of iterations')
+        plt.ylabel('RMS')
+        plt.title('Evolution of the RMS for the SICP and ICP')
+        plt.legend()
+        plt.show()
+
+
+    ####### MONKEY ######
+    if False : 
+        monkey_path='/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /monkeys_pointcloud/monkey_o.ply'
+
+        monkey_o_ply=read_ply(monkey_path)
+    
+        monkey_o=np.vstack((monkey_o_ply['x'],monkey_o_ply['y'],monkey_o_ply['z']))
+
+        monkey_t=np.copy(monkey_o)
+
+
+        monkey_t=transfo(monkey_t,[-0.4,0,-2.2])
+
+        per=94
+        monkey_t=crop_random_points(monkey_t,per)
+        monkey_o=crop_random_points(monkey_o,per)
+
+
+        monkey_o_aberant=add_abberant_points(np.copy(monkey_o),2000,sigma=3)
+
+        print(f'We cropped {per}% of the cloud. the new shape of monkeys is {monkey_o.shape}')
+
+        write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /monkeys_pointcloud/monkey_transl',monkey_t.T,['x','y','z'])
+        write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /monkeys_pointcloud/monkey_aberant',monkey_o_aberant.T,['x','y','z'])
+
+        all_eigenvalues_r, all_eigenvectors_r = compute_local_PCA_knn(monkey_o_aberant.T, monkey_o_aberant.T, 30)
+        normals_monkey_aberant = all_eigenvectors_r[:, :, 0].T
+        print('normal calculated.')
+
+        monkey_p_opt, R_list, T_list, neighbors_list, RMS_list = Sparse_ICP_point_to_plane(data=monkey_t,ref=monkey_o_aberant,normal_ref=normals_monkey_aberant,p=1,mu=10,max_iter_icp=50,RMS_threshold=1e-4)
+
+        write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /monkeys_pointcloud/monkey_opt',monkey_p_opt.T,['x','y','z'])
+
+        RMS=RMSE_with_real(data_base=monkey_t,real=monkey_o,R_list=R_list,T_list=T_list,nbre_ite=50)
+
+        show_ICP(monkey_t, monkey_o_aberant, R_list, T_list, neighbors_list)
+
+        plt.semilogy(RMS,color='r',label='SICP monkey')
+
+        #plt.plot(RMS_list_3,color='g',label='SICP p = 1')
+        plt.xlabel('number of iterations')
+        plt.ylabel('RMS')
+        plt.title('Evolution of the RMS for the SICP')
+        plt.legend()
+        plt.show()
+
+        # monkey_p_opt, R_list, T_list, neighbors_list, RMS_list=Sparse_ICP(monkey_s,monkey_o,p=1,mu=1,max_iter_icp=10,RMS_threshold=1e-4)
+        # #monkey_p_opt, R_list, T_list, neighbors_list, RMS_list=icp_point_to_point(monkey_s,monkey_o,50,1e-4)
+        # # Show ICP
+        # show_ICP(monkey_s, monkey_o, R_list, T_list, neighbors_list)
+        
+        # # Plot RMS
+        # plt.plot(RMS_list)
+        # plt.show()
+
+
+    ##### BUNNY HEAD SEGMENT ######
+    if False : 
+         
+        bunny_segment_path='/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_head_segment.ply'
+        bunny_path='/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_original.ply'
+        noise_and_transformation(bunny_segment_path,sigma=0,t=[-0.05,-0.05,0.05],axis=[0,1,2])
+
+        bunny_o_ply=read_ply(bunny_path)
+        bunny_s_ply=read_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /noisy_data.ply')
+
+        bunny_o=np.vstack((bunny_o_ply['x'],bunny_o_ply['y'],bunny_o_ply['z']))
+        bunny_s=np.vstack((bunny_s_ply['x'],bunny_s_ply['y'],bunny_s_ply['z']))
+
+        #monkey_p_opt, R_list, T_list, neighbors_list, RMS_list=Sparse_ICP(bunny_s,bunny_o,p=1,mu=1,max_iter_icp=60,RMS_threshold=1e-4)
+        monkey_p_opt, R_list, T_list, neighbors_list, RMS_list=icp_point_to_point(bunny_s,bunny_o,150,1e-4)
+        #monkey_p_opt, R_list, T_list, neighbors_list, RMS_list=icp_point_to_point_weighted(bunny_s,bunny_o,1,100,1e-4)
+
+        # Show ICP
+        show_ICP(bunny_s, bunny_o, R_list, T_list, neighbors_list)
+        
+        # Plot RMS
+        plt.plot(RMS_list)
+        plt.show()
+
+    ##### BUNNY NOISY ######
+    if False : 
+        # Cloud paths
+        bunny_o_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_original.ply'
+        bunny_p_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_perturbed.ply'
+
+        # Noise on bunny_p
+        noise_and_transformation(bunny_p_path,sigma=0.001,t=0,axis=[])
+
+        # Load clouds
+        bunny_o_ply = read_ply(bunny_o_path)
+        bunny_p_noisy_ply = read_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /noisy_data.ply')
+
+        bunny_o = np.vstack((bunny_o_ply['x'], bunny_o_ply['y'], bunny_o_ply['z']))
+        bunny_p_noisy = np.vstack((bunny_p_noisy_ply['x'], bunny_p_noisy_ply['y'], bunny_p_noisy_ply['z']))
+ 
+
+        # Apply ICP
+        #bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(bunny_p_noisy, bunny_o, 30, 1e-4)
+        bunny_p_opt, R_list, T_list, neighbors_list, RMS_list=Sparse_ICP(bunny_p_noisy,bunny_o,p=0.5,mu=20,max_iter_icp=10,RMS_threshold=1e-4)
+
+        # Show ICP
+        show_ICP(bunny_p_noisy, bunny_o, R_list, T_list, neighbors_list)
+        
+        # Plot RMS
+        plt.plot(RMS_list)
+        plt.show()
+
+    #### BUNNY ABBERANT
+    if False : 
+         # Cloud paths
+        bunny_o_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_original.ply'
+        bunny_vp_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_very_perturbed.ply'
+        bunny_p_path= '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_perturbed.ply'
+
+        # Load clouds
+        bunny_o_ply = read_ply(bunny_o_path)
+        bunny_vp_ply = read_ply(bunny_vp_path)
+        bunny_p_ply=read_ply(bunny_p_path)
+
+        bunny_o = np.vstack((bunny_o_ply['x'], bunny_o_ply['y'], bunny_o_ply['z']))
+        bunny_vp = np.vstack((bunny_vp_ply['x'], bunny_vp_ply['y'], bunny_vp_ply['z']))
+        bunny_p = np.vstack((bunny_p_ply['x'], bunny_p_ply['y'], bunny_p_ply['z']))
+
+        bunny_p=transfo(bunny_p,[0,-0.04,0])
+    
+        #Add abberant datas
+        bunny_o_abberant=add_abberant_points(bunny_o,100,0.02)
+
+        all_eigenvalues_r, all_eigenvectors_r = compute_local_PCA_knn(bunny_o_abberant.T, bunny_o_abberant.T, 30)
+        normals_bunny_o_abberant = all_eigenvectors_r[:, :, 0].T
+        print('normal calculated.')
+
+        
+        # Apply ICP
+        bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(bunny_p, bunny_o_abberant, 100, 1e-8)
+        #bunny_p_opt_2, R_list_2, T_list_2, neighbors_list_2, RMS_list_2=Sparse_ICP(bunny_p,bunny_o_abberant,p=1,mu=10,max_iter_icp=200,RMS_threshold=1e-4)
+        #bunny_p_opt_2, R_list_2, T_list_2, neighbors_list_2, RMS_list_2 = icp_point_to_point_weighted(bunny_p, bunny_o_abberant,0.2, 300, 1e-8)
+        bunny_p_opt_2, R_list_2, T_list_2, neighbors_list_2, RMS_list_2 = Sparse_ICP_point_to_plane(data=bunny_p,ref=bunny_o_abberant,normal_ref=normals_bunny_o_abberant,p=1,mu=10,max_iter_icp=50,RMS_threshold=1e-4)
+
+        # write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /ICP_abberant',bunny_o_abberant.T,['x','y','z'])
+        # write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /ICP_opt',bunny_p_opt.T,['x','y','z'])
+        # write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /SICP_opt',bunny_p_opt_2.T,['x','y','z'])
+
+        # Show ICP
+        show_ICP(bunny_p, bunny_o_abberant, R_list, T_list, neighbors_list)
+        show_ICP(bunny_p, bunny_o_abberant, R_list_2, T_list_2, neighbors_list_2)
+        
+        # Plot RMS
+        plt.plot(RMS_list)
+        plt.show()
+        plt.plot(RMS_list_2)
+        plt.show()
+
+        t=KDTree(bunny_o.T,100)
+         
+        dis_icp,_=t.query(bunny_p_opt.T,k=1)
+        dis_sicp,_=t.query(bunny_p_opt_2.T,k=1)
+
+        RMS_ICP=np.sqrt(np.mean(dis_icp**2))
+        RMS_SICP=np.sqrt(np.mean(dis_sicp**2))
+
+        print(f"la RMS finale sur le nuage originale pour l'ICP est : {RMS_ICP} ")
+        print(f"la RMS finale sur le nuage originale pour la SICP est : {RMS_SICP} ")
+        print(RMS_ICP-RMS_SICP)
+
+    if False : 
+
+        # Cloud paths
+        bunny_o_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_original.ply'
+        bunny_vp_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_very_perturbed.ply'
+        bunny_p_path= '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_perturbed.ply'
+
+        # Load clouds
+        bunny_o_ply = read_ply(bunny_o_path)
+        bunny_vp_ply = read_ply(bunny_vp_path)
+        bunny_p_ply=read_ply(bunny_p_path)
+
+        bunny_o = np.vstack((bunny_o_ply['x'], bunny_o_ply['y'], bunny_o_ply['z']))
+        bunny_vp = np.vstack((bunny_vp_ply['x'], bunny_vp_ply['y'], bunny_vp_ply['z']))
+        bunny_p = np.vstack((bunny_p_ply['x'], bunny_p_ply['y'], bunny_p_ply['z']))
+
+        all_eigenvalues_r, all_eigenvectors_r = compute_local_PCA_knn(bunny_o.T, bunny_o.T, 30)
+        normals_bunny_o = all_eigenvectors_r[:, :, 0].T
+        print('normal calculated.')
+
+        # Apply ICP
+        #bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data=bunny_p,ref=bunny_o,max_iter=100,RMS_threshold= 1e-4)
+        bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_plane(data=bunny_p,ref=bunny_o,normal_ref=normals_bunny_o,max_iter=50,RMS_threshold= 1e-4,transfo_appro=False)
+        #bunny_p_opt_2, R_list_2, T_list_2, neighbors_list_2, RMS_list_2=Sparse_ICP(bunny_p,bunny_o_abberant,p=1,mu=10,max_iter_icp=200,RMS_threshold=1e-4)
+
+        # Show ICP
+        show_ICP(bunny_p, bunny_o, R_list, T_list, neighbors_list)
+     
+        
+        # Plot RMS
+        plt.plot(RMS_list)
+        plt.show()
+        
+    ### NOISY Bunny segment top bottom
+    if False : 
+            # Cloud paths
+        bunny_top_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_top_segment.ply'
+        bunny_bottom_path = '/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_bottom_segment.ply'
+
+        # Load clouds
+        bunny_top_ply = read_ply(bunny_top_path)
+        bunny_bottom_ply = read_ply(bunny_bottom_path)
+
+
+        bunny_top = np.vstack((bunny_top_ply['x'], bunny_top_ply['y'], bunny_top_ply['z']))
+        bunny_bottom_real = np.vstack((bunny_bottom_ply['x'], bunny_bottom_ply['y'], bunny_bottom_ply['z']))
+        oo=np.copy(bunny_bottom_real)
+
+        bunny_bottom=transfo(oo,[0.2,0,0])
+    
+
+        all_eigenvalues_r, all_eigenvectors_r = compute_local_PCA_knn(bunny_top.T, bunny_top.T, 30)
+        normals_bunny_top = all_eigenvectors_r[:, :, 0].T
+        print('normal calculated.')
+
+        
+        nbre_ite=60
+        # Apply ICP
+        #bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(bunny_bottom, bunny_top, 30, 1e-8)
+
+        #bunny_p_opt, R_list, T_list, neighbors_list, RMS_list=Sparse_ICP(bunny_bottom,bunny_top,p=0.5,mu=10,max_iter_icp=nbre_ite,RMS_threshold=1e-4)
+
+        #bunny_p_opt3, R_list3, T_list3, neighbors_list3, RMS_list3 = icp_point_to_point_weighted(bunny_bottom, bunny_top,p=0.5, max_iter=60, RMS_threshold=1e-8)
+        bunny_p_opt_2, R_list_2, T_list_2, neighbors_list_2, RMS_list_2 = Sparse_ICP_point_to_plane(data=bunny_bottom,ref=bunny_top,normal_ref=normals_bunny_top,p=1,mu=10,max_iter_icp=nbre_ite,RMS_threshold=1e-4)
+        bunny_p_opt, R_list, T_list, neighbors_list, RMS_list = Sparse_ICP_point_to_plane(data=bunny_bottom,ref=bunny_top,normal_ref=normals_bunny_top,p=0.4,mu=10,max_iter_icp=nbre_ite,RMS_threshold=1e-4)
+        bunny_p_opt_3, R_list_3, T_list_3, neighbors_list_3, RMS_list_3 = Sparse_ICP_point_to_plane(data=bunny_bottom,ref=bunny_top,normal_ref=normals_bunny_top,p=0.8,mu=10,max_iter_icp=nbre_ite,RMS_threshold=1e-4)
+        #bunny_p_opt3, R_list3, T_list3, neighbors_list3, RMS_list3 = icp_point_to_plane(bunny_bottom, bunny_top,normal_ref=normals_bunny_top,max_iter=30,RMS_threshold=1e-7)
+
+        #write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /bunny_bottom_décalé',bunny_bottom.T,['x','y','z'])
+        #write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /ICP_point_opt',bunny_p_opt.T,['x','y','z'])
+        #write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /SICP_opt_p=0.5',bunny_p_opt_2.T,['x','y','z'])
+        #write_ply('/Users/paulcaucheteux/Desktop/étude/M2/IASD/S2/3d points/Sparse_ICP/data /ICP_reweight_opt_p=0.5',bunny_p_opt3.T,['x','y','z'])
+        
+        RMS_plane_4=RMSE_with_real(data_base=bunny_bottom,real=bunny_bottom_real,R_list=R_list,T_list=T_list,nbre_ite=nbre_ite)
+        RMS_plane_1=RMSE_with_real(data_base=bunny_bottom,real=bunny_bottom_real,R_list=R_list_2,T_list=T_list_2,nbre_ite=nbre_ite)
+        RMS_plane_8=RMSE_with_real(data_base=bunny_bottom,real=bunny_bottom_real,R_list=R_list_3,T_list=T_list_3,nbre_ite=nbre_ite)
+        # Show ICP
+        show_ICP(bunny_bottom, bunny_top, R_list, T_list, neighbors_list)
+        show_ICP(bunny_bottom, bunny_top, R_list_2, T_list_2, neighbors_list_2)
+        show_ICP(bunny_bottom, bunny_top, R_list_3, T_list_3, neighbors_list_3)
+        # Plot RMS
+        plt.semilogy(RMS_plane_1,color='r',label='SICP p=1')
+        plt.semilogy(RMS_plane_4,color='b',label='SICP p=0.4')
+        plt.semilogy(RMS_plane_8,color='g',label='SICP p=0.8')
+
+        #plt.plot(RMS_list_3,color='g',label='SICP p = 1')
+        plt.xlabel('number of iterations')
+        plt.ylabel('RMS')
+        plt.title('Evolution of the RMS for the SICP')
+        plt.legend()
+        plt.show()
+
