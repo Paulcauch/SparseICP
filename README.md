@@ -10,13 +10,13 @@ Symposium on Geometry Processing 2013, Computer Graphics Forum
 
 ## Features
 
--Implementation of ICP for point-to-point and point-to-plane correspondences.
--Implementation of re-weight ICP for point-to-point correspondences.
--Implementation of ICP with correspondances pruning for point-to-point correspondences.
--Implementation of the Sparse ICP algorithm for point-to-point and point-to-plane correspondences.
--Examples with popular 3D scan datasets (e.g., bunny and owl models).
--Utilities for data preprocessing.
--Visualization tools to inspect the alignment results and convergence behavior.
+- Implementation of ICP for point-to-point and point-to-plane correspondences.
+- Implementation of re-weight ICP for point-to-point correspondences.
+- Implementation of ICP with correspondances pruning for point-to-point correspondences.
+- Implementation of the Sparse ICP algorithm for point-to-point and point-to-plane correspondences.
+- Examples with popular 3D scan datasets (e.g., bunny and owl models).
+- Utilities for data preprocessing.
+- Visualization tools to inspect the alignment results and convergence behavior.
 
 ## Running a test :
 
