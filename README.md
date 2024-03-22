@@ -1,5 +1,5 @@
 # Sparse Iterative Closest Point Implementation
-As part of a work for the "Cloud point and 3D modelization" from the IASD/MVA course at Les Mines.
+As part of a work for the "Point Cloud and 3D modelization" from the IASD/MVA course at Les Mines.
 
 This repository contains an implementation in Python and an analysis report of the Sparse Iterative Closest Point (SICP) algorithm, as introduced in the paper:
 ```
